@@ -1,0 +1,26 @@
+{
+  "rpoB@*=": {
+    "pred": "S",
+    "evid": {}
+  },
+  "rpoB@-*_indel": {
+    "pred": "U",
+    "evid": {}
+  },
+  "rpoB@*_indel": {
+    "pred": "U",
+    "evid": {}
+  },
+  "rpoB@-*?": {
+    "pred": "U",
+    "evid": {}
+  },
+  "rpoB@*?": {
+    "pred": "U",
+    "evid": {}
+  },
+  "rpoB@del_0.0": {
+    "pred": "U",
+    "evid": {}
+  }
+}

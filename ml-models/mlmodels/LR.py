@@ -25,6 +25,7 @@ from sklearn.metrics import (
     accuracy_score,
     average_precision_score,
     roc_auc_score,
+    recall_score,
     confusion_matrix,
     f1_score
 )
@@ -44,20 +45,8 @@ def LogisticReg(self, verbose=True, output_plots=True):
     # create parameter grid with different preprocessing and classifier parameters
     param_grid = {'preprocessing': [StandardScaler(), MinMaxScaler(), RobustScaler(), None], 'classifier__C': [0.01, 0.1, 1, 10, 100]}
 
-    # create logistic regression pipeline with preprocessing
-    if self.upsample:
-        if verbose:
-            print("CV with upsampling currently not implemented.")
-        # pipe = Pipeline([('oversample', RandomOverSampler(sampling_strategy='minority', random_state=42)), ('preprocessing', param_grid), ('classifier', LogisticRegression(max_iter=10000))])
-        # The above line is currently not tested!
-    elif not self.upsample:
-        if verbose:
-            print("Doing CV without upsampling...")
-        pipe = Pipeline([('preprocessing', param_grid), ('classifier', LogisticRegression(max_iter=10000))])  # should be sklearn pipeline
-        # print("Checking pipe:", pipe)
-    else:
-        if verbose:
-            print("Need to specify upsample=True or False!")
+
+    pipe = Pipeline([('preprocessing', param_grid), ('classifier', LogisticRegression(max_iter=10000000))])  # should be sklearn pipeline
 
     if verbose:
         print("LogisticReg from LR.py is working!")
@@ -357,3 +346,103 @@ def LogisticReg(self, verbose=True, output_plots=True):
         # Generate confusion matrix and metrics with optimal parameters for TRAINING SET (from Analysis.py)
         if output_plots:
             Analysis.metrics_on_training_set(self, opt_estimator, opt_features, verbose=verbose)
+
+
+    # Searches for best parameters for recall
+    elif self.scoring_metric == "recall":
+        # Set up dictionary for scoring results
+        scores = {
+            "df_name": [],
+            "search_algorithm": [],
+            "best_estimator": [],
+            "cross_validation_score": [],
+            "recall_score": []
+        }
+
+        for key, df in self.input_df.items():
+            # Grid search with stratified cross validation
+            skfold = StratifiedKFold(n_splits=5)
+            grid_strat = GridSearchCV(pipe, param_grid, cv=skfold, scoring='recall', refit=True)
+            grid_strat.fit(self.X_train_nd[key], self.y_train_nd[key])
+
+            scores["df_name"].append(key)
+            scores["search_algorithm"].append("Stratified grid search")
+            scores["best_estimator"].append(grid_strat.best_estimator_)
+            scores["cross_validation_score"].append(grid_strat.best_score_)
+            scores["recall_score"].append(recall_score(self.y_train_nd[key], grid_strat.predict(self.X_train_nd[key])))
+
+            # Grid search with kfold cross validation
+            kfold = KFold(n_splits=5)
+            grid_kfold = GridSearchCV(pipe, param_grid, cv=kfold, scoring='recall', refit=True)
+            grid_kfold.fit(self.X_train_nd[key], self.y_train_nd[key])
+
+            scores["df_name"].append(key)
+            scores["search_algorithm"].append("Kfold grid search")
+            scores["best_estimator"].append(grid_kfold.best_estimator_)
+            scores["cross_validation_score"].append(grid_kfold.best_score_)
+            scores["recall_score"].append(recall_score(self.y_train_nd[key], grid_kfold.predict(self.X_train_nd[key])))
+
+            # Search with shuffled cross validation
+            kfold_shuffle = KFold(n_splits=5, shuffle=True, random_state=0)
+            grid_kfold_shuffle = GridSearchCV(pipe, param_grid, cv=kfold_shuffle, scoring='recall', refit=True)
+            grid_kfold_shuffle.fit(self.X_train_nd[key], self.y_train_nd[key])
+
+            scores["df_name"].append(key)
+            scores["search_algorithm"].append("Grid kfold shuffle search")
+            scores["best_estimator"].append(grid_kfold_shuffle.best_estimator_)
+            scores["cross_validation_score"].append(grid_kfold_shuffle.best_score_)
+            scores["recall_score"].append(recall_score(self.y_train_nd[key], grid_kfold_shuffle.predict(self.X_train_nd[key])))
+
+        if verbose:
+            print(scores)
+
+        # Identify max score (recall or cross-validation) and store in new dictionary
+        # Create new dictionary with only floats and convert to array
+        scores_subset = np.array([scores["cross_validation_score"]])
+        if verbose:
+            print(scores_subset)
+
+        # Obtain max value and position of max
+        i, j = np.unravel_index(scores_subset.argmax(), scores_subset.shape)
+        if verbose:
+            print("Max CV score:", scores_subset[i, j])
+            print("Position of max:", i, j)
+
+        # Obtain value in another row with the same column as the max
+        if verbose:
+            print("Features for max:", list(scores["df_name"])[j])
+            print("Algorithm for max:", list(scores["search_algorithm"])[j])
+            print("Estimator for max:", list(scores["best_estimator"])[j])
+            print("CV score for max:", list(scores["cross_validation_score"])[j])
+            print("Recall score for max:", list(scores["recall_score"])[j])
+
+        # Generate recall with max parameters
+        opt_features = list(scores["df_name"])[j]
+        opt_algorithm = list(scores["search_algorithm"])[j]
+        opt_estimator = list(scores["best_estimator"])[j]
+        max_cv_score = list(scores["cross_validation_score"])[j]
+        max_recall_score = list(scores["recall_score"])[j]
+
+        # Retrains model with optimal parameters
+        opt_estimator.fit(self.X_train_nd[opt_features], self.y_train_nd[opt_features])
+
+        # Attach variables to self so that they can be accessed in Models.py
+        self.opt_estimator = opt_estimator
+        self.opt_features = opt_features
+
+        # Plot precision_recall_curve for optimal hyperparameters, with default threshold and threshold shifted for max F1 score
+
+        Analysis.pr_curve_on_training_set_for_all(self, opt_estimator, opt_features, verbose=verbose, output_plots=output_plots)
+
+        # Plot feature coefficients
+        if output_plots:
+            Analysis.plot_feature_coeffs(self, opt_estimator, opt_features, verbose=verbose)
+
+        # Generate confusion matrix and metrics with optimal parameters for TEST SET
+        if output_plots:
+            Analysis.metrics_and_confusion_on_test_set(self, opt_estimator, opt_features, verbose=verbose)
+
+        # Generate confusion matrix and metrics with optimal parameters for TRAINING SET
+        if output_plots:
+            Analysis.metrics_on_training_set(self, opt_estimator, opt_features, verbose=verbose)
+
