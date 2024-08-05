@@ -28,7 +28,7 @@ def map_mut2pdb(df, pdb, outfile, phenotypes=False):
     to temperature factors in a new PDB file.
 
     Parameters:
-    - df (DataFrame): DataFrame with columns ['resid', 'segid'] indicating mutation sites.
+    - df (DataFrame): DataFrame with columns ['resid', 'segid', 'phenotype'] indicating mutation sites.
     - pdb (str): Path to the input PDB file.
     - outfile (str): Path to the output PDB file where the results will be saved.
     """
@@ -48,13 +48,15 @@ def map_mut2pdb(df, pdb, outfile, phenotypes=False):
     pdb_df = pd.DataFrame({"segid": chains, "resid": resids})
 
     if phenotypes:
-        df_unique = (
-            df.groupby("resid")
-            .apply(
-                lambda g: g.loc[g["phenotype"] == 1] if (g["phenotype"] == 1).any() else g.iloc[[0]]
+        # Calculate the temperature factor based on phenotype observations
+        df["tempfactor"] = df.groupby("resid")["phenotype"].transform(
+            lambda x: (
+                3
+                if (x == 1).all()
+                else (2 if len(set(x)) > 1 else (1 if (x == 0).all() else np.nan))
             )
-            .reset_index(drop=True)
         )
+        df_unique = df.drop_duplicates(subset=["segid", "resid"])
     else:
         # Aggregate the mutation DataFrame to ensure unique (SEGID, RESID) pairs
         df_unique = df.drop_duplicates(subset=["segid", "resid"])
@@ -63,19 +65,23 @@ def map_mut2pdb(df, pdb, outfile, phenotypes=False):
     df_unique = df_unique.drop_duplicates(subset=["segid", "resid"])
 
     # Map mutations onto atoms
-    merged_df = pdb_df.merge(df_unique, on=["segid", "resid"], how="left", indicator=True)
+    merged_df = pdb_df.merge(
+        df_unique, on=["segid", "resid"], how="left", indicator=True
+    )
     merged_df["mutated"] = (merged_df["_merge"] == "both").astype(int)
 
     # Write mutations to temperature factors
     if phenotypes:
-        merged_df["phenotype"] = merged_df["phenotype"].fillna(0)
-        tempfactors = merged_df["phenotype"].tolist()
+        merged_df["tempfactor"] = merged_df["tempfactor"].fillna(0)
+        tempfactors = merged_df["tempfactor"].tolist()
     else:
         tempfactors = merged_df["mutated"].tolist()
 
     # Ensure the lengths match before adding tempfactors
     if len(tempfactors) != len(u.atoms):
-        raise ValueError(f"Length of tempfactors ({len(tempfactors)}) does not match number of atoms ({len(u.atoms)}).")
+        raise ValueError(
+            f"Length of tempfactors ({len(tempfactors)}) does not match number of atoms ({len(u.atoms)})."
+        )
 
     u.add_TopologyAttr("tempfactors", values=tempfactors)
     u.atoms.write(outfile)
@@ -719,9 +725,10 @@ def calculate_mean_ci(results, metric):
         ci = 1.96 * np.std(data) / np.sqrt(len(data))
         means.append(mean)
         ci_95.append(ci)
-        print (metric)
-        print (ci_95)
+        #print(metric)
+        #print(ci_95)
     return means, ci_95
+
 
 def plot_recall_specificity_with_ci(results, figsize=(12, 8)):
     # Calculate mean and 95% CI for recall, specificity, and ROC AUC
@@ -751,7 +758,9 @@ def plot_recall_specificity_with_ci(results, figsize=(12, 8)):
     bar_width = 0.15
     space_within_metric = 0.03  # space between bars within the same metric
     space_between_metrics = 0.15  # larger space between different metrics
-    index = np.arange(n_metrics) * (n_model_types * (bar_width + space_within_metric) + space_between_metrics)
+    index = np.arange(n_metrics) * (
+        n_model_types * (bar_width + space_within_metric) + space_between_metrics
+    )
 
     # Set color palette
     colors = sns.color_palette("colorblind", n_model_types)
@@ -761,10 +770,12 @@ def plot_recall_specificity_with_ci(results, figsize=(12, 8)):
 
     for i, model_type in enumerate(model_type_names):
         means = [
-            mean_metrics[model_type][shifted_metric] for shifted_metric in metric_mapping.keys()
+            mean_metrics[model_type][shifted_metric]
+            for shifted_metric in metric_mapping.keys()
         ]
         cis = [
-            ci_metrics[model_type][shifted_metric] for shifted_metric in metric_mapping.keys()
+            ci_metrics[model_type][shifted_metric]
+            for shifted_metric in metric_mapping.keys()
         ]
 
         bars = ax.bar(
@@ -774,7 +785,7 @@ def plot_recall_specificity_with_ci(results, figsize=(12, 8)):
             yerr=cis,
             capsize=5,
             edgecolor=colors[i],
-            facecolor='none',
+            facecolor="none",
             label=model_type,
         )
 
@@ -782,40 +793,53 @@ def plot_recall_specificity_with_ci(results, figsize=(12, 8)):
         for bar, mean, ci in zip(bars, means, cis):
             height = bar.get_height() + ci
             ax.annotate(
-                f'{mean:.2f}',
+                f"{mean:.2f}",
                 xy=(bar.get_x() + bar.get_width() / 2, height),
                 xytext=(0, 5),  # 5 points vertical offset
                 textcoords="offset points",
-                ha='center',
-                va='bottom',
+                ha="center",
+                va="bottom",
             )
 
     # Add labels, title, and legend
     ax.set_xticks(index + (bar_width + space_within_metric) * (n_model_types - 1) / 2)
-    ax.set_xticklabels(['']*n_metrics)  # Remove xtick labels
+    ax.set_xticklabels([""] * n_metrics)  # Remove xtick labels
 
     # Add metric labels at the top
     for i, metric in enumerate(metric_names):
-        ax.text(index[i] + (bar_width + space_within_metric) * (n_model_types - 1) / 2, 1.07, metric,
-                ha='center', va='bottom', fontsize=12)
+        ax.text(
+            index[i] + (bar_width + space_within_metric) * (n_model_types - 1) / 2,
+            1.07,
+            metric,
+            ha="center",
+            va="bottom",
+            fontsize=12,
+        )
 
     # Remove y-axis
     ax.yaxis.set_visible(False)
-    ax.spines['left'].set_visible(False)
+    ax.spines["left"].set_visible(False)
 
     # Add model labels under each bar
     for i, model_type in enumerate(model_type_names):
         for j in range(n_metrics):
-            ax.text(index[j] + i * (bar_width + space_within_metric), -0.05, model_type, ha='center', va='top')
+            ax.text(
+                index[j] + i * (bar_width + space_within_metric),
+                -0.05,
+                model_type,
+                ha="center",
+                va="top",
+            )
 
     # Style the plot
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     ax.spines["left"].set_visible(False)
-    ax.spines["bottom"].set_position(('outward', 10))
+    ax.spines["bottom"].set_position(("outward", 10))
 
     # Show the plot
     plt.show()
+
 
 def calculate_sensitivity(tp, fn):
     if tp + fn == 0:
@@ -1166,7 +1190,6 @@ def generate_feature_set(df):
     return df
 
 
-
 def confusion_matrix(labels, predictions, classes):
     """
     Creates a confusion matrix for given labels and predictions with specified classes.
@@ -1187,6 +1210,7 @@ def confusion_matrix(labels, predictions, classes):
             cm[class_to_index[label], class_to_index[prediction]] += 1
 
     return cm
+
 
 def plot_truthtables(truth_table, figsize=(2.5, 1.5), fontsize=12):
     """
@@ -1253,3 +1277,31 @@ def plot_truthtables(truth_table, figsize=(2.5, 1.5), fontsize=12):
     )
 
     plt.show()
+
+def plot_model_discrepancies(ax, discrepancy_dict, title):
+    # Extract mutations and models
+    mutations = list(discrepancy_dict.keys())
+    models = list(next(iter(discrepancy_dict.values())).keys())
+
+    # Initialize a dictionary to hold the model data
+    model_data = {model: [] for model in models}
+
+    # Populate the model_data dictionary
+    for mutation in mutations:
+        for model in models:
+            model_data[model].append(discrepancy_dict[mutation][model])
+
+    # Plotting
+    palette = sns.color_palette("colorblind", len(models))
+    markers = ['o', 's', 'D', '^']  # Different marker symbols
+
+    for i, model in enumerate(models):
+        ax.scatter(mutations, model_data[model], label=model, color=palette[i], marker=markers[i], alpha=0.8)
+
+    ax.set_xlabel('Mutations')
+    ax.set_ylabel('Values')
+    ax.set_xticklabels(mutations, rotation=90)
+    ax.legend(frameon=False)
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.set_title(title)
