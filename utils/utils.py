@@ -1297,7 +1297,7 @@ def plot_model_discrepancies(ax, discrepancy_dict, ylabel):
     for i, model in enumerate(models):
         ax.scatter(mutations, model_data[model], label=model, color=palette[i], marker=markers[i], alpha=0.8)
 
-    ax.set_xlabel('Mutations')
+
     ax.set_ylabel(ylabel)
     ax.set_xticklabels(mutations, rotation=90)
     ax.legend(frameon=False)
