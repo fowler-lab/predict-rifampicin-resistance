@@ -340,9 +340,6 @@ def plot_backwards_elim(outputs, vline=None, figsize=(10, 5)):
         color="red",
         fmt="*",
     )
-    plt.xlabel("Number of Features Removed")
-    plt.ylabel("Metric Score")
-    plt.title("Performance Metrics vs. Number of Features Removed")
     plt.legend(frameon=False)
     plt.ylim(0, 1.1)
     if vline is not None:
@@ -350,6 +347,7 @@ def plot_backwards_elim(outputs, vline=None, figsize=(10, 5)):
     ax = plt.gca()
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
+    plt.xlabel('Number features removed')
     plt.show()
 
 
@@ -415,8 +413,6 @@ def plot_backwards_elim_2_plots(outputs1, outputs2, figsize=(15, 5)):
         )
         ax.plot(x, roc_auc_poly(x), color=color[2], linestyle="--")
 
-        ax.set_xlabel("Number of Features Removed")
-        ax.set_ylabel("Metric Score")
         ax.set_ylim(0, 1.1)
         ax.spines["top"].set_visible(False)
         ax.spines["right"].set_visible(False)
@@ -524,13 +520,12 @@ def plot_catalogue_proportions(
             if figsize is None:
                 item.set_fontsize(7)
             else:
-                item.set_fontsize(9)
+                item.set_fontsize(7)
 
         for item in [ax.xaxis.label, ax.yaxis.label] + ax.get_xticklabels():
-            item.set_fontsize(9)
+            item.set_fontsize(7)
 
         plt.xlabel("proportion resistant")
-        # plt.ylabel("mutation")
         plt.tight_layout()
         plt.xlim(-0.05, 1.05)
         ax.set_ylim(-0.5, len(df2) - 0.5)  # Adjust y-axis limits to fit the data
@@ -567,7 +562,7 @@ def plot_distance_vs_proportion(all_solos, data, feature):
     """
 
     # Cross tabulation to get phenotype counts for each unique mutation
-    ct = pd.crosstab([all_solos.MUTATION], all_solos.PHENOTYPE)
+    ct = pd.crosstab([all_solos.mutation], all_solos.PHENOTYPE)
     ct["total"] = ct.sum(axis=1)
     ct.sort_values(by="total", inplace=True, ascending=False)
     ct[["proportion_R", "ci_lower", "ci_upper"]] = ct.apply(
@@ -707,11 +702,8 @@ def plot_metrics_with_ci(
             color=colors[idx],
         )
 
-    ax.set_ylabel("Single Features")
-    ax.set_xlabel("Performance Metric")
     ax.legend(frameon=False)
     plt.xlim(0, 1.05)
-    ax.set_title("Univariate Logistic Regression with Confidence Intervals")
     sns.despine(ax=ax, top=True, right=True)
     plt.show()
 
@@ -730,7 +722,7 @@ def calculate_mean_ci(results, metric):
     return means, ci_95
 
 
-def plot_recall_specificity_with_ci(results, figsize=(12, 8)):
+def plot_recall_specificity_with_ci(results, figsize=(12, 8), colors=None):
     # Calculate mean and 95% CI for recall, specificity, and ROC AUC
     mean_metrics = {}
     ci_metrics = {}
@@ -763,7 +755,10 @@ def plot_recall_specificity_with_ci(results, figsize=(12, 8)):
     )
 
     # Set color palette
-    colors = sns.color_palette("colorblind", n_model_types)
+    if colors is None:
+        colors = sns.color_palette("bright", n_model_types)
+    elif len(colors) != n_model_types:
+        raise ValueError("The length of the colors list must match the number of models.")
 
     # Create the bar plot
     fig, ax = plt.subplots(figsize=figsize)
@@ -785,7 +780,8 @@ def plot_recall_specificity_with_ci(results, figsize=(12, 8)):
             yerr=cis,
             capsize=5,
             edgecolor=colors[i],
-            facecolor="none",
+            facecolor='none',
+            linewidth=2,  # Set the border width
             label=model_type,
         )
 
@@ -813,7 +809,7 @@ def plot_recall_specificity_with_ci(results, figsize=(12, 8)):
             metric,
             ha="center",
             va="bottom",
-            fontsize=12,
+            fontsize=7,
         )
 
     # Remove y-axis
@@ -839,6 +835,7 @@ def plot_recall_specificity_with_ci(results, figsize=(12, 8)):
 
     # Show the plot
     plt.show()
+
 
 
 def calculate_sensitivity(tp, fn):
@@ -904,7 +901,6 @@ def metrics_vs_distance(stats_df, figsize=(12, 5)):
     )
 
     plt.xlabel("Rif Distance")
-    plt.ylabel("Value")
 
     legend = plt.legend()
     legend.get_frame().set_linewidth(0)
@@ -1212,7 +1208,7 @@ def confusion_matrix(labels, predictions, classes):
     return cm
 
 
-def plot_truthtables(truth_table, figsize=(2.5, 1.5), fontsize=12):
+def plot_truthtables(truth_table, figsize=(2.5, 1.5), fontsize=7):
     """
     Plots a truth table as a confusion matrix to denote each cell.
 
@@ -1233,15 +1229,17 @@ def plot_truthtables(truth_table, figsize=(2.5, 1.5), fontsize=12):
     axes.set_xlim([0, 2])
     axes.set_xticks([0.5, 1.5])
     axes.set_xticklabels(["S", "R"], fontsize=fontsize)
+    axes.set_xlabel('Predicted Labels', fontsize=fontsize)
+
+    axes.set_ylim([0, 2])
+    axes.set_yticks([0.5, 1.5])
+    axes.set_yticklabels(["R", "S"], fontsize=fontsize)
+    axes.set_ylabel('True Labels', fontsize=fontsize)
 
     axes.add_patch(Rectangle((0, 0), 1, 1, fc="#e41a1c", alpha=0.7))
     axes.add_patch(Rectangle((1, 0), 1, 1, fc="#4daf4a", alpha=0.7))
     axes.add_patch(Rectangle((1, 1), 1, 1, fc="#fc9272", alpha=0.7))
     axes.add_patch(Rectangle((0, 1), 1, 1, fc="#4daf4a", alpha=0.7))
-
-    axes.set_ylim([0, 2])
-    axes.set_yticks([0.5, 1.5])
-    axes.set_yticklabels(["R", "S"], fontsize=fontsize)
 
     axes.text(
         1.5,
@@ -1249,7 +1247,7 @@ def plot_truthtables(truth_table, figsize=(2.5, 1.5), fontsize=12):
         int(truth_table["R"]["R"]),
         ha="center",
         va="center",
-        fontsize=fontsize,
+        fontsize=16,
     )
     axes.text(
         1.5,
@@ -1257,7 +1255,7 @@ def plot_truthtables(truth_table, figsize=(2.5, 1.5), fontsize=12):
         int(truth_table["R"]["S"]),
         ha="center",
         va="center",
-        fontsize=fontsize,
+        fontsize=16,
     )
     axes.text(
         0.5,
@@ -1265,7 +1263,7 @@ def plot_truthtables(truth_table, figsize=(2.5, 1.5), fontsize=12):
         int(truth_table["S"]["S"]),
         ha="center",
         va="center",
-        fontsize=fontsize,
+        fontsize=16,
     )
     axes.text(
         0.5,
@@ -1273,12 +1271,13 @@ def plot_truthtables(truth_table, figsize=(2.5, 1.5), fontsize=12):
         int(truth_table["S"]["R"]),
         ha="center",
         va="center",
-        fontsize=fontsize,
+        fontsize=16,
     )
 
     plt.show()
 
-def plot_model_discrepancies(ax, discrepancy_dict, title):
+
+def plot_model_discrepancies(ax, discrepancy_dict, ylabel):
     # Extract mutations and models
     mutations = list(discrepancy_dict.keys())
     models = list(next(iter(discrepancy_dict.values())).keys())
@@ -1299,9 +1298,10 @@ def plot_model_discrepancies(ax, discrepancy_dict, title):
         ax.scatter(mutations, model_data[model], label=model, color=palette[i], marker=markers[i], alpha=0.8)
 
     ax.set_xlabel('Mutations')
-    ax.set_ylabel('Values')
+    ax.set_ylabel(ylabel)
     ax.set_xticklabels(mutations, rotation=90)
     ax.legend(frameon=False)
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
-    ax.set_title(title)
+
+
