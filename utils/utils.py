@@ -821,7 +821,7 @@ def plot_recall_specificity_with_ci(results, figsize=(12, 8), colors=None):
         for j in range(n_metrics):
             ax.text(
                 index[j] + i * (bar_width + space_within_metric),
-                -0.05,
+                -0.07,
                 model_type,
                 ha="center",
                 va="top",
