@@ -1,0 +1,16 @@
+Organism,Wild,Position,Mutant,Distance_to_ligand,Prediction
+MTB,HIS,445,THR,3.419,Resistant
+MTB,ARG,448,LYS,3.061,Resistant
+MTB,SER,441,VAL,6.742,Resistant
+MTB,HIS,445,GLY,3.419,Resistant
+MTB,ARG,448,GLN,3.061,Resistant
+MTB,GLU,207,LYS,26.306,Susceptible
+MTB,LEU,731,PRO,24.277,Resistant
+MTB,SER,441,MET,6.742,Resistant
+MTB,SER,493,ARG,7.974,Resistant
+MTB,SER,441,TRP,6.742,Resistant
+MTB,HIS,445,PHE,3.419,Resistant
+MTB,MET,434,ILE,4.285,Resistant
+MTB,VAL,262,ALA,49.858,Resistant
+MTB,SER,582,ALA,11.479,Resistant
+MTB,LEU,378,ARG,8.55,Resistant

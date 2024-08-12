@@ -22,6 +22,8 @@ from scipy.stats import sem
 from matplotlib.patches import Rectangle
 
 
+
+
 def map_mut2pdb(df, pdb, outfile, phenotypes=False):
     """
     Maps mutation positions onto a PDB structure and writes the result
@@ -320,25 +322,26 @@ def plot_backwards_elim(outputs, vline=None, figsize=(10, 5)):
         num_features_removed,
         sensitivity_means,
         yerr=sensitivity_cis,
-        label="Sensitivity",
-        color="blue",
+        label="Sensitivity with 95% CI",
+        color="purple",
         fmt="x",
     )
     plt.errorbar(
         num_features_removed,
         specificity_means,
         yerr=specificity_cis,
-        label="Specificity",
+        label="Specificity with 95% CI",
         color="green",
         fmt="o",
+        markerfacecolor='none'
     )
     plt.errorbar(
         num_features_removed,
         roc_auc_means,
         yerr=roc_auc_cis,
-        label="ROC AUC",
-        color="red",
-        fmt="*",
+        label="ROC AUC with 95% CI",
+        color="blue",
+        fmt="x",
     )
     plt.legend(frameon=False)
     plt.ylim(0, 1.1)
@@ -347,7 +350,7 @@ def plot_backwards_elim(outputs, vline=None, figsize=(10, 5)):
     ax = plt.gca()
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
-    plt.xlabel('Number features removed')
+    plt.xlabel('Number of features removed')
     plt.show()
 
 
@@ -669,7 +672,7 @@ def plot_metrics_with_ci(
     # Plotting
     fig, ax = plt.subplots(figsize=figsize)
 
-    colors = ["purple", "blue", "green", "red", "orange"]  # Add more colors if needed
+    colors = ["purple", "blue", "green", "red", "orange"] 
 
     for idx, metric in enumerate(metrics):
         sorted_metric = sorted(
@@ -697,7 +700,7 @@ def plot_metrics_with_ci(
             ],
             fmt="|",
             ecolor=colors[idx],
-            capsize=5,
+            capsize=3,
             label=f"{metric} with 95% CI",
             color=colors[idx],
         )
@@ -795,6 +798,7 @@ def plot_recall_specificity_with_ci(results, figsize=(12, 8), colors=None):
                 textcoords="offset points",
                 ha="center",
                 va="bottom",
+                fontsize=7,
             )
 
     # Add labels, title, and legend
@@ -825,13 +829,14 @@ def plot_recall_specificity_with_ci(results, figsize=(12, 8), colors=None):
                 model_type,
                 ha="center",
                 va="top",
+                fontsize=7,
             )
 
     # Style the plot
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     ax.spines["left"].set_visible(False)
-    ax.spines["bottom"].set_position(("outward", 10))
+    ax.spines["bottom"].set_position(("outward", 0))
 
     # Show the plot
     plt.show()
@@ -1179,8 +1184,6 @@ def generate_feature_set(df):
         }
     )
 
-    features.df.to_csv("./data/tables/generated/features_dataset.csv")
-
     df = features.df.copy()
 
     return df
@@ -1247,7 +1250,7 @@ def plot_truthtables(truth_table, figsize=(2.5, 1.5), fontsize=7):
         int(truth_table["R"]["R"]),
         ha="center",
         va="center",
-        fontsize=16,
+        fontsize=14,
     )
     axes.text(
         1.5,
@@ -1255,7 +1258,7 @@ def plot_truthtables(truth_table, figsize=(2.5, 1.5), fontsize=7):
         int(truth_table["R"]["S"]),
         ha="center",
         va="center",
-        fontsize=16,
+        fontsize=14,
     )
     axes.text(
         0.5,
@@ -1263,7 +1266,7 @@ def plot_truthtables(truth_table, figsize=(2.5, 1.5), fontsize=7):
         int(truth_table["S"]["S"]),
         ha="center",
         va="center",
-        fontsize=16,
+        fontsize=14,
     )
     axes.text(
         0.5,
@@ -1271,7 +1274,7 @@ def plot_truthtables(truth_table, figsize=(2.5, 1.5), fontsize=7):
         int(truth_table["S"]["R"]),
         ha="center",
         va="center",
-        fontsize=16,
+        fontsize=14,
     )
 
     plt.show()
