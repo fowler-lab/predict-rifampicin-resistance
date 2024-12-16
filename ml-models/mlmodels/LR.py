@@ -46,7 +46,7 @@ def LogisticReg(self, verbose=True, output_plots=True):
     param_grid = {'preprocessing': [StandardScaler(), MinMaxScaler(), RobustScaler(), None], 'classifier__C': [0.01, 0.1, 1, 10, 100]}
 
 
-    pipe = Pipeline([('preprocessing', param_grid), ('classifier', LogisticRegression(max_iter=10000000))])  # should be sklearn pipeline
+    pipe = Pipeline([('preprocessing', param_grid), ('classifier', LogisticRegression(max_iter=10000000000))])  # should be sklearn pipeline
 
     if verbose:
         print("LogisticReg from LR.py is working!")
