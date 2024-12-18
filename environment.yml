@@ -1,4 +1,4 @@
-name: rif_paper
+name: predict_rif_ml
 channels:
   - conda-forge
   - defaults
