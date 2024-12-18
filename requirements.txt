@@ -1,0 +1,9 @@
+scipy==1.13.0
+matplotlib
+mdanalysis==2.7.0
+scikit-learn==1.3.2
+catomatic==0.1.2
+freesasa==2.2.1
+gumpy==1.3.8
+piezo==0.8.4
+sbmlcore==0.2.4
