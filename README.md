@@ -6,7 +6,7 @@ The aim of this GitHub repository is to allow you to reproduce the results and f
 >
 > Charlotte I. Lynch, Dylan Adlard, Philip W Fowler
 >
-> [https://doi.org/10.1101/2024.08.15.608097](https://doi.org/10.1101/2024.08.15.608097)
+> [https://doi.org/10.1183/23120541.00952-2024](https://doi.org/10.1183/23120541.00952-2024)
 
 The above preprint has been submitted for peer-review and this README will be updated when the manuscript has been accepted for publication in a peer-reviewed journal.
 
