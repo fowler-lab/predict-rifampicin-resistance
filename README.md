@@ -1,14 +1,12 @@
 # predict-rifampicin-resistance
 
-The aim of this GitHub repository is to allow you to reproduce the results and figures of the following study
+The aim of this GitHub repository is to allow you to reproduce the results and figures of the following published manuscript
 
 > Predicting rifampicin resistance in M. tuberculosis using machine learning informed by protein structural and chemical features
 >
 > Charlotte I. Lynch, Dylan Adlard, Philip W Fowler
->
-> [https://doi.org/10.1183/23120541.00952-2024](https://doi.org/10.1183/23120541.00952-2024)
-
-The above preprint has been submitted for peer-review and this README will be updated when the manuscript has been accepted for publication in a peer-reviewed journal.
+> 
+> ERJ Open Research (2024) 00952-2024 doi:[10.1183/23120541.00952-2024](https://doi.org/10.1183/23120541.00952-2024)
 
 The repository contains three main juypter notebooks: `methods.ipynb`, `Results.ipynb`, and `Supplement.ipynb`.
 
